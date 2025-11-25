@@ -11,18 +11,104 @@ router.get('/login', (req, res) => {
   });
 });
 
-// Handle login
+// Handle login - 支持表單和 JSON
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
+  
+  // 檢查是否是 JSON 請求
+  const isJsonRequest = req.headers['content-type'] === 'application/json';
+  
   try {
-    const user = await User.findOne({ username });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.render('login', { error: 'Invalid credentials' });
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Username:', username);
+    console.log('Request type:', isJsonRequest ? 'JSON' : 'Form');
+    
+    // 基本驗證
+    if (!username || !password) {
+      console.log('❌ Missing username or password');
+      if (isJsonRequest) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Username and password are required' 
+        });
+      }
+      return res.render('login', { 
+        error: 'Username and password are required',
+        formData: { username }
+      });
     }
+
+    const user = await User.findOne({ username });
+    if (!user) {
+      console.log('❌ User not found:', username);
+      if (isJsonRequest) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Invalid credentials' 
+        });
+      }
+      return res.render('login', { 
+        error: 'Invalid credentials',
+        formData: { username }
+      });
+    }
+
+    // 驗證密碼
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      console.log('❌ Invalid password for user:', username);
+      if (isJsonRequest) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Invalid credentials' 
+        });
+      }
+      return res.render('login', { 
+        error: 'Invalid credentials',
+        formData: { username }
+      });
+    }
+    
+    // 設置 session
     req.session.userId = user._id;
-    res.redirect('/tasks');
+    req.session.username = user.username;
+    
+    console.log('✅ Login successful:', {
+      userId: user._id,
+      username: user.username,
+      sessionId: req.sessionID
+    });
+    
+    // 根據請求類型返回響應
+    if (isJsonRequest) {
+      console.log('📦 Returning JSON response');
+      return res.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: { 
+          id: user._id, 
+          username: user.username 
+        },
+        session: req.sessionID
+      });
+    } else {
+      console.log('🔄 Redirecting to /tasks');
+      res.redirect('/tasks');
+    }
+    
   } catch (err) {
-    res.render('login', { error: 'Server error' });
+    console.error('💥 LOGIN ERROR:', err);
+    
+    if (isJsonRequest) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server error during login' 
+      });
+    }
+    res.render('login', { 
+      error: 'Server error',
+      formData: { username }
+    });
   }
 });
 
