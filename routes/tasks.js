@@ -8,6 +8,26 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
+// 日曆頁面
+router.get('/calendar', requireAuth, async (req, res) => {
+  try {
+    // 獲取任務數據
+    const tasks = await Task.find({ user: req.session.userId })
+      .sort({ dueDate: 1 })
+      .lean();
+    
+    res.render('calendar', { 
+      title: 'Task Calendar - Todo App',
+      user: req.user || { id: req.session.userId },
+      events: tasks,  // 改為傳遞 events 而不是 tasksJson
+      tasksJson: JSON.stringify(tasks) // 可以保留這個
+    });
+  } catch (err) {
+    console.error('Error loading calendar:', err);
+    res.status(500).send('Error loading calendar');
+  }
+});
+
 // ----------------------
 // 任務列表頁
 // ----------------------
