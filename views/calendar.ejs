@@ -9,7 +9,6 @@
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css' rel='stylesheet' />
     
     <style>
-        /* 基礎樣式 */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -75,12 +74,10 @@
             text-align: center;
         }
         
-        /* 日曆樣式 */
         #calendar {
             margin-top: 20px;
         }
         
-        /* 彈出窗口樣式 */
         .modal {
             display: none;
             position: fixed;
@@ -123,7 +120,6 @@
             color: #333;
         }
         
-        /* 任務詳情樣式 */
         .event-detail-item {
             margin-bottom: 15px;
             padding: 12px;
@@ -150,7 +146,6 @@
             color: #666;
         }
         
-        /* 徽章樣式 */
         .priority-badge, .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -191,7 +186,6 @@
             color: white;
         }
         
-        /* 日曆事件樣式 */
         .fc-event {
             cursor: pointer;
             padding: 2px 5px !important;
@@ -247,7 +241,6 @@
             const closeBtns = document.querySelectorAll('.close');
             const detailsContent = document.getElementById('eventDetailsContent');
           
-            // 確保 events 是有效的數組
             let calendarEvents = [];
             try {
                 calendarEvents = <%- JSON.stringify(tasksJson ? JSON.parse(tasksJson) : []) %>;
@@ -257,7 +250,6 @@
                 calendarEvents = [];
             }
             
-            // 檢查是否有任務數據
             if (calendarEvents.length === 0) {
                 calendarEl.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
@@ -271,9 +263,7 @@
                 return;
             }
           
-            // 處理事件數據
             calendarEvents = calendarEvents.map(event => {
-                // 檢查是否有截止日期
                 if (!event.dueDate) {
                     console.warn('Task has no dueDate:', event.title);
                     return null;
@@ -284,7 +274,7 @@
                 return {
                     id: event._id || event.id,
                     title: cleanTitle,
-                    start: event.dueDate, // FullCalendar 需要 start 字段
+                    start: event.dueDate,
                     extendedProps: {
                         description: event.description || '',
                         priority: event.priority || 'medium',
@@ -294,7 +284,7 @@
                     borderColor: getPriorityColor(event.priority),
                     textColor: '#fff'
                 };
-            }).filter(event => event !== null); // 過濾掉無效的事件
+            }).filter(event => event !== null);
           
             console.log('Processed events:', calendarEvents);
           
@@ -307,7 +297,6 @@
                 }
             }
           
-            // Initialize FullCalendar
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 headerToolbar: {
