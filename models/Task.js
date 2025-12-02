@@ -33,5 +33,4 @@ const taskSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// 檢查模型是否已經存在，避免重複定義
 module.exports = mongoose.models.Task || mongoose.model('Task', taskSchema);
