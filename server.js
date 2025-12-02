@@ -11,47 +11,34 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
-const apiRoutes = require('./routes/api');  // 添加 API 路由
+const apiRoutes = require('./routes/api'); 
 const User = require('./models/User');
 
 const app = express();
 
-// ----------------------
-// Connect to MongoDB
-// ----------------------
-mongoose.connect(MONGODB_URI)  // 使用 Atlas 连接字符串
+mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected to Atlas'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ----------------------
-// Middleware
-// ----------------------
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// View engine setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// ----------------------
-// Session setup
-// ----------------------
 app.use(session({
   secret: process.env.JWT_SECRET || 'fallback-secret-key',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({ 
-    client: mongoose.connection.getClient() // Mongoose 9.x 推荐方式
+    client: mongoose.connection.getClient()
   }),
   cookie: { 
-    maxAge: 1000 * 60 * 60 * 24 // 24小时
+    maxAge: 1000 * 60 * 60 * 24
   }
 }));
 
-// ----------------------
-// Make user available in all views
-// ----------------------
 const requireAuth = (req, res, next) => {
   if (req.session.userId) return next();
   res.redirect('/auth/login');
@@ -72,35 +59,25 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ----------------------
-// Routes
-// ----------------------
 app.use('/auth', authRoutes);
 app.use('/tasks', requireAuth, taskRoutes);
-app.use('/api', apiRoutes);  // 添加 API 路由
+app.use('/api', apiRoutes); 
 
-// ----------------------
-// Calendar Route (日曆頁面)
-// ----------------------
 app.get('/calendar', requireAuth, (req, res) => {
-  res.redirect('/tasks/calendar'); // 重定向到 tasks 路由中的日曆頁面
+  res.redirect('/tasks/calendar'); 
 });
 
-// Home page
 app.get('/', (req, res) => {
   res.render('index', { title: 'Index - Todo App' });
 });
 
 app.get('/time', (req, res) => {
     res.render('time', {
-        initialTime: '10:00', // Display value
-        initialTimeSeconds: 600 // Actual seconds (10 minutes)
+        initialTime: '10:00', 
+        initialTimeSeconds: 600
     });
 });
 
-// ----------------------
-// 调试路由
-// ----------------------
 app.get('/debug', (req, res) => {
   res.json({
     session: req.session,
@@ -109,9 +86,6 @@ app.get('/debug', (req, res) => {
   });
 });
 
-// ----------------------
-// 错误处理中间件
-// ----------------------
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).render('error', { 
@@ -120,7 +94,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 处理
 app.use((req, res) => {
   res.status(404).render('error', {
     error: 'Page not found',
@@ -128,9 +101,6 @@ app.use((req, res) => {
   });
 });
 
-// ----------------------
-// Start server
-// ----------------------
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
